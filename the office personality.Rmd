@@ -1,0 +1,62 @@
+---
+title: "TV Personalities"
+output: pdf_document
+date: "2022-08-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+# Get all the data
+tuesdata <- tidytuesdayR::tt_load('2022-08-16')
+characters <- tuesdata$characters
+stats <- tuesdata$psych_stats
+```
+
+
+```{r}
+# Get the stats for the office 
+the_office = stats %>% filter( uni_name == "The Office")
+
+# choose the characteristics we want
+traits = c("playful", "opinionated", "awkward", "emotional", "dramatic", "playful", "flirtatious", "bold", "trusting")
+
+# Narrow it down to those traits 
+the_office_small = the_office %>% filter( personality %in% traits)
+
+# only keep the important columns
+the_office_small = the_office_small[,c('char_name', 'personality', 'avg_rating')]
+
+# get rid of duplicates
+the_office_small = the_office_small %>% distinct(char_name, personality, .keep_all = TRUE)
+
+# Pivot
+comparision = the_office_small %>% pivot_wider(names_from = personality, values_from = avg_rating)
+
+# Replace NaN's with averages
+comparision = comparision %>% 
+  mutate_if(is.numeric, ~replace_na(.,mean(., na.rm = TRUE)))
+
+# Keep the characters you want 
+chars = c('Michael Scott', 'Jim Halpert', 'Pam Beesly', 'Dwight Schrute' ,'Andy Bernard')
+comparisoin_small = comparision %>% filter( char_name %in% chars)
+
+
+```
+
+```{r}
+comparisoin_small %>% 
+     mutate_each(funs(rescale), -char_name) %>%
+     ggradar()
+
+```
+
